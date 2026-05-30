@@ -1,0 +1,24 @@
+{
+  "translation": {
+    "layout": {
+      "dashboard": "Panel",
+      "ia_prognostics": "Pronósticos IA",
+      "history": "Historial",
+      "favorites": "Favoritos",
+      "settings": "Ajustes",
+      "food_plan": "Generar Plan Alimenticio",
+      "active_session": "Sesión Activa",
+      "temporary_workspace": "Espacio Temporal"
+    },
+    "theme": {
+      "title": "Tema de Interfaz",
+      "desc": "Cambia la apariencia de la plataforma.",
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
+    "lang": {
+      "title": "Idioma Principal",
+      "desc": "Define el idioma de la aplicación."
+    }
+  }
+}

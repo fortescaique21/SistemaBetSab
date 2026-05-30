@@ -1,0 +1,24 @@
+{
+  "translation": {
+    "layout": {
+      "dashboard": "Dashboard",
+      "ia_prognostics": "AI Prognostics",
+      "history": "History",
+      "favorites": "Favorites",
+      "settings": "Settings",
+      "food_plan": "Generate Meal Plan",
+      "active_session": "Active Session",
+      "temporary_workspace": "Temporary Workspace"
+    },
+    "theme": {
+      "title": "Interface Theme",
+      "desc": "Change the platform appearance.",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "lang": {
+      "title": "Main Language",
+      "desc": "Set the application language."
+    }
+  }
+}
