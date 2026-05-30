@@ -46,7 +46,8 @@ export function IAAnalysis() {
                   {
                     text: `Você é um especialista em prognósticos de futebol. Busque na web (usando a ferramenta de pesquisa do Google) informações REAIS, ATUAIS e CONFIÁVEIS sobre o confronto de futebol entre ${homeTeam} (mandante) e ${awayTeam} (visitante). Descubra a data da partida, o campeonato, desfalques recentes, retrospecto e previsões de páginas web de esportes.
                     
-Gere um resultado no formato JSON com a seguinte estrutura exata:
+Responda UNICAMENTE com um objeto JSON estruturado. Não coloque textos explicativos fora do JSON. Você pode envelopar a resposta em uma tag de código markdown \`\`\`json ... \`\`\` se preferir.
+A estrutura do JSON deve ser exatamente:
 {
   "bestBet": {
     "market": "mercado recomendado (ex: Vitória do Real Madrid, Ambas Marcam, Over 2.5 gols)",
@@ -66,10 +67,7 @@ Gere um resultado no formato JSON com a seguinte estrutura exata:
               {
                 googleSearch: {}
               }
-            ],
-            generationConfig: {
-              responseMimeType: 'application/json'
-            }
+            ]
           })
         }
       );
@@ -88,7 +86,19 @@ Gere um resultado no formato JSON com a seguinte estrutura exata:
         throw new Error("A Inteligência Artificial retornou uma resposta vazia. Tente novamente.");
       }
 
-      const resultJson = JSON.parse(textContent);
+      // Limpar marcações de markdown de código (```json ... ```) se presentes
+      let cleanText = textContent.trim();
+      if (cleanText.startsWith("```json")) {
+        cleanText = cleanText.substring(7);
+      } else if (cleanText.startsWith("```")) {
+        cleanText = cleanText.substring(3);
+      }
+      if (cleanText.endsWith("```")) {
+        cleanText = cleanText.substring(0, cleanText.length - 3);
+      }
+      cleanText = cleanText.trim();
+
+      const resultJson = JSON.parse(cleanText);
 
       // Extrair metadados da pesquisa web (Grounding Metadata)
       let sourcesMarkdown = "";
