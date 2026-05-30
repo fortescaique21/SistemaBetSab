@@ -8,6 +8,7 @@ export function IAAnalysis() {
   const [awayTeam, setAwayTeam] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Buscar do contexto o currentAnalysis
   const { analyses } = useSession();
@@ -20,45 +21,109 @@ export function IAAnalysis() {
 
     setLoading(true);
     setCurrentAnalysisId(null);
+    setError(null);
 
-    // Mock Backend Delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
-
-    // Resultado Fictício
-    const mockData = {
-      homeTeam,
-      awayTeam,
-      bestBet: {
-        market: 'Over 1.5 gols',
-        confidence: 84
-      },
-      doubleChance: {
-        market: `${homeTeam} ou Empate`,
-        confidence: 78
-      },
-      markdownStats: `
-### Resumo da Partida
-**${homeTeam} vs ${awayTeam}**
-
-**🏆 Análise dos Times**
-A equipe do **${homeTeam}** (mandante) apresenta um forte poderio ofensivo em casa nos últimos 5 jogos.
-O **${awayTeam}** vem de uma sequência de 2 vitórias consistentes fora de casa.
-
-### 🎯 Prognósticos Recomendados
-| Mercado | Probabilidade | Confiança | Justificativa |
-|---|---|---|---|
-| Resultado Final | 45% ${homeTeam} | Média | O fator casa favorece. |
-| Over 1.5 Gols | 84% | Alta | Ambos os times têm históricos de over. |
-
-> **Gestão de Risco:** Recomendamos a aposta em **Over 1.5 Gols** como *Conservadora*.
-      `
-    };
-
-    const newId = await addAnalysis(mockData);
-    if (newId) {
-      setCurrentAnalysisId(newId);
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      setError("Chave de API do Gemini (VITE_GEMINI_API_KEY) não configurada no arquivo .env.");
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text: `Você é um especialista em prognósticos de futebol. Busque na web (usando a ferramenta de pesquisa do Google) informações REAIS, ATUAIS e CONFIÁVEIS sobre o confronto de futebol entre ${homeTeam} (mandante) e ${awayTeam} (visitante). Descubra a data da partida, o campeonato, desfalques recentes, retrospecto e previsões de páginas web de esportes.
+                    
+Gere um resultado no formato JSON com a seguinte estrutura exata:
+{
+  "bestBet": {
+    "market": "mercado recomendado (ex: Vitória do Real Madrid, Ambas Marcam, Over 2.5 gols)",
+    "confidence": 85
+  },
+  "doubleChance": {
+    "market": "dupla chance recomendada (ex: Real Madrid ou Empate)",
+    "confidence": 75
+  },
+  "markdownStats": "### Resumo da Partida\\nCampeonato e data real encontrada. Resumo das notícias recentes e expectativa para o jogo.\\n\\n### 🏆 Análise dos Times\\nRetrospecto dos times, desfalques importantes e motivação.\\n\\n### 🎯 Prognósticos Recomendados\\nMercados e justificativas em formato de tabela."
+}`
+                  }
+                ]
+              }
+            ],
+            tools: [
+              {
+                googleSearch: {}
+              }
+            ],
+            generationConfig: {
+              responseMimeType: 'application/json'
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.error?.message?.includes("leaked")) {
+          throw new Error("A chave de API VITE_GEMINI_API_KEY configurada foi marcada como vazada (leaked) pelo Google. Por favor, substitua a chave no seu arquivo .env por uma nova chave gerada no Google AI Studio.");
+        }
+        throw new Error(errorData.error?.message || `Erro do servidor (status ${response.status})`);
+      }
+
+      const resData = await response.json();
+      const textContent = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textContent) {
+        throw new Error("A Inteligência Artificial retornou uma resposta vazia. Tente novamente.");
+      }
+
+      const resultJson = JSON.parse(textContent);
+
+      // Extrair metadados da pesquisa web (Grounding Metadata)
+      let sourcesMarkdown = "";
+      const groundingChunks = resData.candidates?.[0]?.groundingMetadata?.groundingChunks;
+      if (groundingChunks && groundingChunks.length > 0) {
+        sourcesMarkdown += "\n\n### 🌐 Fontes da Pesquisa Web\n";
+        const visited = new Set<string>();
+        groundingChunks.forEach((chunk: any) => {
+          const web = chunk.web;
+          if (web && web.uri && !visited.has(web.uri)) {
+            visited.add(web.uri);
+            const title = web.title || web.uri;
+            sourcesMarkdown += `- [${title}](${web.uri})\n`;
+          }
+        });
+      }
+
+      const finalData = {
+        homeTeam: resultJson.homeTeam || homeTeam,
+        awayTeam: resultJson.awayTeam || awayTeam,
+        bestBet: resultJson.bestBet || { market: 'Over 1.5 gols', confidence: 50 },
+        doubleChance: resultJson.doubleChance || { market: 'Dupla chance indisponível', confidence: 50 },
+        markdownStats: (resultJson.markdownStats || '') + sourcesMarkdown
+      };
+
+      const newId = await addAnalysis(finalData);
+      if (newId) {
+        setCurrentAnalysisId(newId);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Ocorreu um erro ao gerar prognósticos reais.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,6 +141,23 @@ O **${awayTeam}** vem de uma sequência de 2 vitórias consistentes fora de casa
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+        {error && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '16px',
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid var(--accent-red)',
+            borderRadius: '12px',
+            color: 'var(--accent-red)',
+            animation: 'fadeIn 0.3s'
+          }}>
+            <ShieldAlert size={20} />
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Formulário de Input */}
         <section className="glass animate-fade-in" style={{ padding: '32px', borderRadius: '16px' }}>
           <form onSubmit={handleGenerate} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
