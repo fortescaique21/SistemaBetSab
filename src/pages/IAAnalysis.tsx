@@ -54,8 +54,10 @@ O **${awayTeam}** vem de uma sequência de 2 vitórias consistentes fora de casa
       `
     };
 
-    const newId = addAnalysis(mockData);
-    setCurrentAnalysisId(newId);
+    const newId = await addAnalysis(mockData);
+    if (newId) {
+      setCurrentAnalysisId(newId);
+    }
     setLoading(false);
   };
 

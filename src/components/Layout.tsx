@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useSession } from '../context/SessionContext';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard, 
@@ -12,11 +13,13 @@ import {
   Menu,
   X,
   Moon,
-  Sun
+  Sun,
+  Shield
 } from 'lucide-react';
 
 export function Layout() {
   const { user, resetSession, settings, updateSettings } = useSession();
+  const { settings: siteSettings } = useSiteSettings();
   const { t } = useTranslation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [onlineTime, setOnlineTime] = useState('00:00');
@@ -47,6 +50,7 @@ export function Layout() {
     { to: '/history', icon: History, label: t('layout.history') },
     { to: '/favorites', icon: Star, label: t('layout.favorites') },
     { to: '/settings', icon: Settings, label: t('layout.settings') },
+    { to: '/admin', icon: Shield, label: 'Painel Admin' },
   ];
 
   return (
@@ -85,7 +89,7 @@ export function Layout() {
       >
         <div style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)' }}>
           <div>
-            <h1 className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0 }}>BetMind AI</h1>
+            <h1 className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0 }}>{siteSettings.site_name}</h1>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
               Workspace
             </span>
@@ -254,10 +258,24 @@ export function Layout() {
         </header>
 
         {/* Page Outlet */}
-        <main style={{ flex: 1, padding: '32px 24px', overflowY: 'auto' }}>
-          <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+        <main style={{ flex: 1, padding: '32px 24px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%', flex: 1 }}>
             <Outlet />
           </div>
+          
+          {/* Footer */}
+          <footer style={{ 
+            maxWidth: '1200px', 
+            margin: '40px auto 0', 
+            width: '100%', 
+            paddingTop: '24px', 
+            borderTop: '1px solid var(--border-color)', 
+            textAlign: 'center', 
+            color: 'var(--text-muted)', 
+            fontSize: '0.85rem' 
+          }}>
+            {siteSettings.footer_text}
+          </footer>
         </main>
       </div>
       

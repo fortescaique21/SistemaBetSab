@@ -1,5 +1,5 @@
 import { useSession } from '../context/SessionContext';
-import { History as HistoryIcon, Trash2, ShieldAlert, Award } from 'lucide-react';
+import { History as HistoryIcon, Trash2, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function History() {

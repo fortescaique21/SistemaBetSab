@@ -1,9 +1,11 @@
 import { useSession } from '../context/SessionContext';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 import { Bot, Star, Activity, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function Dashboard() {
-  const { user, analyses, favorites } = useSession();
+  const { analyses, favorites } = useSession();
+  const { settings } = useSiteSettings();
 
   const lastAnalysis = analyses.length > 0 ? analyses[0] : null;
 
@@ -26,10 +28,10 @@ export function Dashboard() {
       >
         <div>
           <h2 style={{ fontSize: '2.5rem', fontWeight: '800', margin: '0 0 8px 0', color: '#fff' }}>
-            Bem-vindo ao seu <span className="gradient-text">Workspace</span>
+            {settings.welcome_title}
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', margin: 0, maxWidth: '600px' }}>
-            Este é um ambiente temporário. Nenhum dado é salvo no banco de dados e tudo será limpo ao final da sua sessão. Utilize a Inteligência Artificial estrategicamente.
+            {settings.welcome_desc}
           </p>
         </div>
         <Link to="/analise-ia" style={{ textDecoration: 'none' }}>

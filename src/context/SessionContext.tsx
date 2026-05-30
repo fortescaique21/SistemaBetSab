@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next'; // i18n hooks
 
@@ -57,7 +58,7 @@ const getSystemTheme = (): 'dark' | 'light' => {
 export function SessionProvider({ children }: { children: ReactNode }) {
   const { i18n } = useTranslation();
 
-  const [user, setUser] = useState<UserProfile>(() => {
+  const [user] = useState<UserProfile>(() => {
     let localUserId = localStorage.getItem('sistemabet_user_id');
     if (!localUserId) {
       localUserId = crypto.randomUUID();
